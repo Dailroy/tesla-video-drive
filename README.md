@@ -88,7 +88,7 @@ yt-dlp --version
 ### 2. Node dependencies
 
 ```bash
-git clone https://github.com/madpowah/tesla-video-drive.git
+git clone https://github.com/Dailroy/tesla-video-drive.git
 cd tesla-video-drive
 npm install
 cp .env.example .env

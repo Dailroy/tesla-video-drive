@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>Twitch Client</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:sans-serif;background:#0a0a0f;color:#e0e0e0;padding:8px;font-size:14px}
+h1{font-size:1.2rem;color:#9146ff;text-align:center;margin-bottom:4px}
+.p{background:#0f0f1a;border:1px solid #2a2a3a;border-radius:8px;padding:8px;margin-bottom:6px}
+h2{font-size:.7rem;color:#888;text-transform:uppercase;margin-bottom:4px;letter-spacing:.3px}
+.row{display:flex;gap:4px;align-items:center;margin:3px 0;flex-wrap:wrap}
+.inp{flex:1;padding:8px;background:#050510;border:1px solid #333;border-radius:6px;color:#e0e0e0;font-size:.85rem;min-width:0}
+.inp:focus{outline:none;border-color:#9146ff}
+.btn{padding:8px 12px;border:none;border-radius:6px;font-size:.8rem;font-weight:600;cursor:pointer}
+.btn:active{opacity:.6}
+.btn-p{background:#4a00a0;color:#fff}
+.btn-r{background:#600;color:#fff}
+.channel{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;margin:3px 0;border:1px solid #2a2a3a;cursor:pointer}
+.channel:active{transform:scale(.97)}
+.channel .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.channel .on{background:#f00;box-shadow:0 0 6px #f00}
+.channel .off{background:#444}
+.channel .nm{flex:1;font-weight:600;font-size:.85rem}
+.channel .tl{font-size:.65rem;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px}
+.channel .del{color:#555;font-size:.9rem;padding:2px 6px;cursor:pointer}
+.channel .del:active{color:#f00}
+.stat{background:#050510;border-left:3px solid #9146ff;padding:4px 8px;border-radius:0 6px 6px 0;font-size:.7rem;min-height:20px;margin-bottom:4px}
+#nc{width:100%;background:#000;border-radius:6px;margin:4px 0;display:block}
+</style>
+</head>
+<body>
+<h1>Twitch Client</h1>
+
+<div id="playerBox" style="display:none;position:relative;width:100%;background:#000;border-radius:8px;overflow:hidden;margin-bottom:6px">
+  <div style="position:absolute;top:0;left:0;right:0;z-index:10;display:flex;justify-content:space-between;padding:4px 8px;background:rgba(0,0,0,.6);font-size:.7rem">
+    <span><span style="color:#9146ff;font-weight:600" id="npCh">--</span> <span style="color:#0f0" id="npFps">0 FPS</span></span>
+    <span id="npTitle" style="color:#888"></span>
+  </div>
+  <canvas id="nc" style="width:100%;display:block;background:#000"></canvas>
+  <div style="display:flex;gap:6px;align-items:center;padding:4px 8px;background:rgba(0,0,0,.6)">
+    <span style="color:#888;font-size:.7rem">Sound</span>
+    <input type="range" id="vol" min="0" max="100" value="100" style="flex:1;height:4px">
+    <button class="btn" id="btnSync" style="padding:4px 8px;font-size:.7rem;background:#333;border:1px solid #555;color:#eee;border-radius:4px;cursor:pointer">Sync +2s</button>
+    <button class="btn btn-r" id="npStop" style="padding:4px 10px;font-size:.7rem">Stop</button>
+  </div>
+</div>
+<audio id="na" style="display:none"></audio>
+
+<div class="p">
+  <h2>Login</h2>
+  <div class="row">
+    <a href="/api/twitch/login" class="btn btn-p" style="flex:1;text-align:center;text-decoration:none;">Log in with Twitch</a>
+  </div>
+</div>
+
+<div class="p">
+  <h2>Add a channel</h2>
+  <div class="row">
+    <input class="inp" id="inp" placeholder="Channel name">
+    <button class="btn btn-p" id="add">Add</button>
+    <button class="btn btn-p" id="ref">Refresh</button>
+  </div>
+</div>
+
+<div class="p">
+  <h2>My channels</h2>
+  <div id="list"><div style="color:#555;text-align:center;padding:10px;font-size:.8rem;">Add channels to get started</div></div>
+</div>
+
+<div class="stat"><span id="st">Channels saved automatically</span></div>
+
+<script src="jsmpeg.min.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var nc = $('nc'), na = $('na');
+  var player = null, curCh = null, fpsCount = 0, lastFps = 0, chans = JSON.parse(localStorage.getItem('tc') || '[]');
+
+  function save() { localStorage.setItem('tc', JSON.stringify(chans)); }
+
+  function addCh(nm) {
+    nm = nm.trim().toLowerCase().replace(/[^a-zA-Z0-9_]/g, '');
+    if (!nm || chans.includes(nm)) return;
+    chans.push(nm);
+    save();
+    render();
+  }
+
+  function rmCh(nm) {
+    chans = chans.filter(function (c) { return c !== nm; });
+    save();
+    if (curCh === nm) stop();
+    render();
+  }
+
+  function checkStatus(nm, el) {
+    var dot = el.querySelector('.dot'), tl = el.querySelector('.tl');
+    dot.className = 'dot off';
+    tl.textContent = '...';
+    var x = new XMLHttpRequest();
+    x.open('GET', '/api/twitch/status?channel=' + encodeURIComponent(nm), true);
+    x.onload = function () {
+      try {
+        var d = JSON.parse(x.responseText);
+        if (d.live) { dot.className = 'dot on'; tl.textContent = d.title || 'Live'; }
+        else { dot.className = 'dot off'; tl.textContent = 'Offline'; }
+      } catch (e) { tl.textContent = 'Error'; }
+    };
+    x.send();
+  }
+
+  function render() {
+    var list = $('list');
+    if (!chans.length) {
+      list.innerHTML = '<div style="color:#555;text-align:center;padding:10px;font-size:.8rem;">Add channels to get started</div>';
+      return;
+    }
+    var h = '';
+    for (var i = 0; i < chans.length; i++) {
+      var a = chans[i] === curCh ? ' style="border-color:#9146ff;"' : '';
+      h += '<div class="channel" data-ch="' + chans[i] + '"' + a + '>';
+      h += '<span class="dot off"></span><span class="nm">' + chans[i] + '</span>';
+      h += '<span class="tl">...</span><span class="del" data-d="' + chans[i] + '">X</span></div>';
+    }
+    list.innerHTML = h;
+    [].forEach.call(list.querySelectorAll('.channel'), function (el) {
+      el.onclick = function (e) { if (e.target.classList.contains('del')) return; stream(this.dataset.ch); };
+    });
+    [].forEach.call(list.querySelectorAll('.del'), function (el) {
+      el.onclick = function (e) { e.stopPropagation(); rmCh(this.dataset.d); };
+    });
+    [].forEach.call(list.querySelectorAll('.channel'), function (el) { checkStatus(el.dataset.ch, el); });
+  }
+
+  // ===== MPEG1 Stream =====
+  function stream(ch) {
+    stop();
+    curCh = ch;
+    $('playerBox').style.display = 'block';
+    $('npCh').textContent = ch;
+    $('npTitle').textContent = '';
+
+    // Canvas
+    nc.width = 854;
+    nc.height = 480;
+
+    // Audio
+    na.preload = 'none';
+    na.src = '/api/live-audio?channel=' + encodeURIComponent(ch) + '&_=' + Date.now();
+    na.load();
+    (function tp() { na.play().catch(function () { setTimeout(tp, 100); }); })();
+
+    // Compensate audio delay (~5s): skip ahead once audio plays
+    (function sync() {
+      if (!player || !curCh) return;
+      if (!na.paused && na.readyState >= 2 && na.currentTime < 3) { na.currentTime = Math.min(na.duration || 999, 6); }
+      setTimeout(sync, 2000);
+    })();
+
+    // MPEG1 via JSMpeg
+    fpsCount = 0;
+    lastFps = 0;
+    $('npFps').textContent = '0 FPS';
+    var wsUrl = (window.location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + window.location.host + '/ws/mpeg1?channel=' + encodeURIComponent(ch) + '&quality=720';
+    $('npTitle').textContent = 'Buffering audio...';
+
+    // Wait for audio to start, then launch video sync
+    var syncTimer = setInterval(function () {
+      if (na.readyState >= 2 && na.currentTime > 0) {
+        clearInterval(syncTimer);
+        $('npTitle').textContent = 'Starting...';
+        player = new JSMpeg.Player(wsUrl, {
+          canvas: nc, audio: false, streaming: true, maxBufferSize: 1024 * 1024,
+          pauseWhenHidden: false, preserveDrawingBuffer: true,
+          onVideoDecode: function (decoder) {
+            if (!player) return;
+            fpsCount++;
+            var now = Date.now();
+            if (now - lastFps >= 1000) {
+              $('npFps').textContent = fpsCount + ' FPS';
+              fpsCount = 0;
+              lastFps = now;
+              $('npTitle').textContent = 'Live';
+            }
+          }
+        });
+      }
+    }, 200);
+    // Timeout: force start after 10s even without audio
+    setTimeout(function () {
+      if (!player) {
+        clearInterval(syncTimer);
+        $('npTitle').textContent = 'Forced start...';
+        try {
+          player = new JSMpeg.Player(wsUrl, { canvas: nc, audio: false, streaming: true, maxBufferSize: 1024 * 1024, pauseWhenHidden: false, preserveDrawingBuffer: true });
+        } catch (e) {}
+      }
+    }, 10000);
+  }
+
+  function stop() {
+    if (player) { try { player.destroy(); } catch (e) {} player = null; }
+    na.pause();
+    na.src = '';
+    curCh = null;
+    $('playerBox').style.display = 'none';
+    render();
+  }
+
+  $('npStop').onclick = stop;
+  $('btnSync').onclick = function () { try { na.currentTime = Math.min(na.currentTime + 2, na.duration || 999); } catch (e) {} };
+  $('vol').oninput = function () { na.volume = this.value / 100; };
+
+  // OAuth token handling
+  var urlToken = null;
+  (function () {
+    var p = window.location.search.substring(1).split('&');
+    for (var i = 0; i < p.length; i++) {
+      var kv = p[i].split('=');
+      if (kv[0] === 'token') urlToken = decodeURIComponent(kv[1]);
+    }
+  })();
+
+  if (urlToken) {
+    localStorage.setItem('twitch_token', urlToken);
+    $('st').textContent = 'Login successful! Importing follows...';
+    var x = new XMLHttpRequest();
+    x.open('GET', '/api/twitch/follows?token=' + encodeURIComponent(urlToken), true);
+    x.onload = function () {
+      try {
+        var d = JSON.parse(x.responseText);
+        if (d.ok && d.channels) {
+          var n = 0;
+          for (var i = 0; i < d.channels.length; i++) {
+            if (!chans.includes(d.channels[i])) { chans.push(d.channels[i]); n++; }
+          }
+          if (n) { save(); $('st').textContent = 'Imported ' + n + ' channels!'; }
+          else $('st').textContent = 'Already in your list';
+          render();
+          window.history.replaceState({}, '', '/twitch-client/');
+        } else $('st').textContent = 'Error: ' + (d.error || '?');
+      } catch (e) { $('st').textContent = 'Error parsing response'; }
+    };
+    x.send();
+  }
+
+  $('add').onclick = function () { addCh($('inp').value); $('inp').value = ''; };
+  $('inp').onkeydown = function (e) { if (e.key === 'Enter') $('add').click(); };
+  $('ref').onclick = render;
+
+  render();
+  if (/QtCarBrowser|Tesla/i.test(navigator.userAgent)) $('st').textContent = 'Tesla detected - channels saved locally';
+})();
+</script>
+</body>
+</html>

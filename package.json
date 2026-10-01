@@ -1,0 +1,14 @@
+{
+  "name": "tesla-video-drive",
+  "version": "1.0.0",
+  "description": "Bypass Tesla Drive Mode browser video restrictions — Probe + Twitch Client",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js"
+  },
+  "dependencies": {
+    "@pinggy/pinggy": "^0.5.3",
+    "express": "^4.18.2",
+    "ws": "^8.21.0"
+  }
+}

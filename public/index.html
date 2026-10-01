@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<link rel="icon" href="data:,">
+<title>Tesla Video</title>
+<style>
+:root{
+  --bg:#06070d; --panel:#0d0f18; --panel-2:#12141f; --line:#1e2233; --line-2:#2b3149;
+  --tx:#eaecf6; --tx-2:#a3a9c1; --tx-3:#767c95;
+  --ac:#3aa0ff; --ac-2:#7b5cff; --ok:#3ddc84; --err:#ff5d5d; --live:#ff3b3b;
+  --r-lg:14px; --r-md:10px; --r-sm:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+html,body{min-height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-size:15px;line-height:1.45;color:var(--tx);
+  background:radial-gradient(1100px 460px at 50% -220px, rgba(58,160,255,.12), transparent 70%),var(--bg);
+  max-width:1080px;margin:0 auto;padding:14px 14px 30px;
+}
+a{color:var(--ac);text-decoration:none}
+a:hover{text-decoration:underline}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+
+/* ---------- header ---------- */
+.hd{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{width:30px;height:30px;flex:0 0 auto;border-radius:9px;display:grid;place-items:center;
+  background:linear-gradient(140deg,var(--ac),var(--ac-2));box-shadow:0 5px 16px rgba(58,160,255,.35)}
+.logo svg{width:14px;height:14px;display:block;margin-left:2px}
+h1{font-size:1rem;font-weight:800;letter-spacing:.07em;white-space:nowrap}
+.tag{font-size:.66rem;letter-spacing:.05em;color:var(--tx-3);background:var(--panel);
+  border:1px solid var(--line);border-radius:99px;padding:5px 11px;white-space:nowrap}
+
+/* ---------- warn / status ---------- */
+.warn{display:none;background:rgba(255,93,93,.08);border:1px solid rgba(255,93,93,.42);
+  color:#ffb3b3;border-radius:var(--r-md);padding:11px 13px;font-size:.8rem;margin-bottom:12px;line-height:1.5}
+#st{display:flex;align-items:flex-start;gap:10px;background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--r-md);padding:12px 14px;font-size:.84rem;color:var(--tx-2);margin-bottom:12px;word-break:break-word}
+#st::before{content:"";flex:0 0 auto;width:7px;height:7px;border-radius:50%;margin-top:6px;
+  background:var(--ac);box-shadow:0 0 9px var(--ac)}
+#st.ok::before{background:var(--ok);box-shadow:0 0 9px var(--ok)}
+#st.err{border-color:rgba(255,93,93,.45);background:rgba(255,93,93,.07);color:#ffb3b3}
+#st.err::before{background:var(--err);box-shadow:0 0 9px var(--err)}
+
+/* ---------- panels ---------- */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:14px;margin-bottom:12px}
+.panel h2{font-size:.67rem;font-weight:700;color:var(--tx-3);text-transform:uppercase;
+  letter-spacing:.1em;margin-bottom:11px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* ---------- inputs ---------- */
+input[type=text]{flex:1 1 240px;min-width:0;height:46px;padding:0 14px;background:#05060c;
+  border:1px solid var(--line-2);border-radius:var(--r-md);color:#fff;font-size:1rem;font-family:inherit;
+  transition:border-color .15s,box-shadow .15s}
+input[type=text]::placeholder{color:#565c74}
+input[type=text]:focus{outline:none;border-color:var(--ac);box-shadow:0 0 0 3px rgba(58,160,255,.18)}
+
+/* ---------- buttons ---------- */
+button,.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:46px;
+  padding:0 15px;border:none;border-radius:var(--r-md);font-family:inherit;font-size:.87rem;
+  font-weight:600;color:#dfe2f0;background:#191c2b;cursor:pointer;text-decoration:none;white-space:nowrap;
+  transition:background .15s,filter .15s,transform .07s}
+button:hover,.btn:hover{background:#232738;filter:brightness(1.06);text-decoration:none}
+button:active,.btn:active{transform:scale(.975)}
+button:disabled{opacity:.5;pointer-events:none}
+button svg,.btn svg{width:16px;height:16px;flex:0 0 auto}
+button.primary{background:linear-gradient(180deg,#2f9bff,#0b6fe0);color:#fff;
+  box-shadow:0 6px 18px rgba(11,111,224,.35)}
+button.purple{background:linear-gradient(180deg,#7b5cff,#4c1fd6);color:#fff;
+  box-shadow:0 6px 18px rgba(76,31,214,.3)}
+button.small{height:40px;padding:0 12px;font-size:.8rem;border-radius:9px;gap:6px}
+button.icon{width:40px;padding:0}
+button.danger{background:rgba(255,93,93,.12);color:#ff9d9d;border:1px solid rgba(255,93,93,.32)}
+button.danger:hover{background:rgba(255,93,93,.2)}
+button.on{background:rgba(61,220,132,.14);color:#7dffbb;border:1px solid rgba(61,220,132,.42)}
+.btn.purple.small{background:linear-gradient(180deg,#7b5cff,#4c1fd6);color:#fff;height:40px;
+  padding:0 13px;font-size:.8rem;border-radius:9px}
+
+select{height:46px;background:#191c2b;color:#dfe2f0;border:1px solid var(--line-2);
+  border-radius:var(--r-md);padding:0 12px;font-size:.85rem;font-family:inherit;cursor:pointer}
+select:focus{outline:none;border-color:var(--ac)}
+
+/* ---------- chips ---------- */
+.chip{display:inline-flex;align-items:center;height:30px;padding:0 11px;font-size:.74rem;
+  color:var(--tx-2);background:#151827;border:1px solid var(--line);border-radius:99px;
+  white-space:nowrap;font-variant-numeric:tabular-nums}
+.chip svg{width:14px;height:14px}
+
+/* ---------- player ---------- */
+#playerBox{display:none;margin-bottom:12px;background:#000;border:1px solid var(--line);
+  border-radius:var(--r-lg);overflow:hidden;box-shadow:0 20px 44px rgba(0,0,0,.55)}
+#stage{position:relative;background:#000}
+#cv{display:block;width:100%;height:auto;background:#000}
+.top{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;
+  gap:8px;padding:9px 11px;background:linear-gradient(180deg,rgba(0,0,0,.78),rgba(0,0,0,0));
+  font-size:.74rem;z-index:5;pointer-events:none}
+.top .pill{display:inline-flex;align-items:center;gap:8px;min-width:0;background:rgba(6,7,13,.55);
+  border:1px solid rgba(255,255,255,.1);padding:5px 11px;border-radius:99px}
+.top .name{color:#9fd6ff;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px}
+.top .fps{color:#7dffbb;font-variant-numeric:tabular-nums;white-space:nowrap}
+.top .live{color:#ff5b5b;font-weight:800;font-size:.66rem;letter-spacing:.09em}
+.top .ttl{color:#c6c9dd;background:rgba(6,7,13,.55);border:1px solid rgba(255,255,255,.1);
+  padding:5px 11px;border-radius:99px;max-width:55%;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;text-align:right}
+.bars{padding:10px;display:flex;flex-direction:column;gap:8px;background:var(--panel);
+  border-top:1px solid var(--line)}
+.ctrl{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.ctrl button{flex:0 0 auto}
+.spacer{flex:1;min-width:0}
+#pos{min-width:96px;justify-content:center}
+input[type=range]{flex:1 1 130px;min-width:90px;height:28px;background:transparent;cursor:pointer;
+  accent-color:var(--ac)}
+input[type=range]::-webkit-slider-runnable-track{height:4px;background:#242939;border-radius:99px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;margin-top:-5.5px;
+  border-radius:50%;background:var(--ac);box-shadow:0 0 0 3px rgba(58,160,255,.25)}
+input[type=range]::-moz-range-track{height:4px;background:#242939;border-radius:99px}
+input[type=range]::-moz-range-thumb{width:15px;height:15px;border:none;border-radius:50%;background:var(--ac)}
+
+/* ---------- search results ---------- */
+#results{display:flex;flex-direction:column}
+#results .r{display:flex;gap:10px;align-items:center;width:100%;text-align:left;min-height:46px;
+  padding:10px;background:transparent;border:none;border-bottom:1px solid var(--line);
+  border-radius:var(--r-sm);color:inherit;font-family:inherit;font-size:.87rem;cursor:pointer}
+#results .r:hover{background:#141727}
+#results .r:last-child{border-bottom:none}
+#results .r .t{flex:1;min-width:0;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#results .r .d{font-size:.7rem;color:var(--tx-3);background:#151827;border:1px solid var(--line);
+  border-radius:99px;padding:3px 9px;font-variant-numeric:tabular-nums;flex:0 0 auto}
+
+/* ---------- saved list ---------- */
+.list .it{display:flex;align-items:center;gap:10px;min-height:48px;padding:9px 10px 9px 12px;
+  background:#0b0d16;border:1px solid var(--line);border-radius:var(--r-md);margin-bottom:7px;
+  cursor:pointer;transition:background .15s,border-color .15s}
+.list .it:hover{background:#12141f;border-color:var(--line-2)}
+.list .it.act{border-color:rgba(58,160,255,.6);background:rgba(58,160,255,.07)}
+.list .dot{width:8px;height:8px;border-radius:50%;background:#343a52;flex:0 0 auto}
+.list .dot.on{background:var(--live);box-shadow:0 0 8px var(--live);animation:pulse 1.7s infinite}
+@keyframes pulse{50%{opacity:.5}}
+.list .nm{font-weight:600;font-size:.85rem;color:var(--tx);flex-shrink:0;max-width:40%;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list .sub{flex:1;min-width:0;font-size:.73rem;color:var(--tx-3);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.list .del{display:grid;place-items:center;width:36px;height:36px;flex:0 0 auto;
+  border-radius:9px;color:var(--tx-3);transition:background .15s,color .15s}
+.list .del:hover{background:rgba(255,93,93,.16);color:#ff9d9d}
+.list .del svg{width:14px;height:14px}
+.empty{color:var(--tx-3);text-align:center;padding:18px 10px;font-size:.82rem}
+
+/* ---------- footer ---------- */
+footer{text-align:center;font-size:.7rem;color:var(--tx-3);padding:16px 6px 0;line-height:1.8}
+#lanhint{display:inline-flex;align-items:center;gap:8px;max-width:100%;background:var(--panel);
+  border:1px solid var(--line);border-radius:99px;padding:7px 14px;color:#9fd6ff;margin-bottom:9px;
+  cursor:pointer;overflow-wrap:anywhere;transition:border-color .15s}
+#lanhint:hover{border-color:rgba(58,160,255,.55)}
+#lanhint:empty{display:none}
+
+.hidden{display:none!important}
+
+/* full-screen fallback when the browser has no Fullscreen API (Tesla) */
+body.cinema{overflow:hidden}
+body.cinema #playerBox{position:fixed;top:0;left:0;right:0;bottom:0;z-index:100;border-radius:0;
+  border:none;margin:0;display:flex!important;flex-direction:column}
+body.cinema #stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:#000}
+body.cinema #cv{width:100%;height:100%;object-fit:contain}
+body.cinema .bars{flex-shrink:0}
+#bExitFs{display:none}
+body.cinema #bExitFs{display:inline-flex}
+
+/* ---------- responsive / a11y ---------- */
+@media (max-width:640px){
+  body{padding:10px 10px 26px}
+  button.primary,button.purple{flex:1 1 auto!important}
+  .top .name{max-width:120px}
+  .top .ttl{max-width:46%}
+  #pos{min-width:84px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#1d2131;border-radius:99px}
+::-webkit-scrollbar-track{background:transparent}
+</style>
+</head>
+<body><body>
+
+<header class="hd">
+  <div class="brand">
+    <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="#fff"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14z"/></svg></span>
+    <h1>TESLA VIDEO</h1>
+  </div>
+  <span class="tag" id="tag">yt + twitch</span>
+</header>
+
+<div class="warn" id="warn"></div>
+
+<div id="playerBox">
+  <div id="stage">
+    <div class="top">
+      <span class="pill"><span class="name" id="pbCh">--</span><span class="fps" id="pbFps"></span><span class="live hidden" id="pbLive">LIVE</span></span>
+      <span class="ttl" id="pbTtl"></span>
+    </div>
+    <canvas id="cv" width="1280" height="720"></canvas>
+  </div>
+  <div class="bars">
+    <div class="ctrl">
+      <button class="small" id="bBack" aria-label="Назад на 10 секунд">-10с</button>
+      <button class="small" id="bFwd" aria-label="Вперёд на 10 секунд">+10с</button>
+      <span class="chip" id="pos">--:--</span>
+      <span class="spacer"></span>
+      <span class="chip" id="qual">720p</span>
+      <span class="chip" id="syncVal">AV 0.0с</span>
+      <button class="small" id="syncDown" title="Видео раньше (сдвиг A/V)">A/V-</button>
+      <button class="small" id="syncUp" title="Видео позже (сдвиг A/V)">A/V+</button>
+      <button class="small on" id="syncAuto" title="Авто-синхронизация звука и видео">AUTO</button>
+    </div>
+    <div class="ctrl">
+      <span class="chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 5L6 9H3v6h3l5 4V5z"/><path d="M15.4 8.6a4.8 4.8 0 0 1 0 6.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M17.8 6.2a8.2 8.2 0 0 1 0 11.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+      <input type="range" id="vol" min="0" max="100" value="80" aria-label="Громкость">
+      <button class="small icon" id="bFs" aria-label="Полный экран" title="Полный экран"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <button class="small icon" id="bExitFs" aria-label="Выйти из полного экрана" title="Выйти из полного экрана"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <button class="small danger" id="bStop"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2.5" fill="currentColor"/></svg>Стоп</button>
+    </div>
+  </div>
+</div>
+<audio id="av" preload="auto"></audio>
+
+<div class="panel">
+  <h2>Источник</h2>
+  <div class="row">
+    <input type="text" id="q" placeholder="Ссылка YouTube / ник Twitch" aria-label="Ссылка на видео или ник канала" autocomplete="off" autocorrect="off" spellcheck="false">
+  </div>
+  <div class="row" style="margin-top:8px">
+    <button class="primary" id="bPlay" style="flex:2"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14z"/></svg>Играть</button>
+    <button class="purple" id="bSearch" style="flex:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>Поиск</button>
+    <select id="quality" aria-label="Качество">
+      <option value="360">360p</option>
+      <option value="480">480p</option>
+      <option value="720" selected>720p</option>
+      <option value="1080">1080p</option>
+    </select>
+  </div>
+</div>
+
+<div class="panel hidden" id="resBox">
+  <h2>Результаты поиска</h2>
+  <div id="results"></div>
+</div>
+
+<div id="st">Готово. Вставь ссылку или ник.</div>
+
+<div class="panel">
+  <h2>Мои источники</h2>
+  <div class="row">
+    <input type="text" id="addInp" placeholder="Добавить канал / ссылку" aria-label="Добавить канал или ссылку" autocomplete="off">
+    <button class="small icon" id="bAdd" aria-label="Добавить" title="Добавить"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+    <button class="small icon" id="bRefresh" aria-label="Обновить список" title="Обновить"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg></button>
+    <a href="/api/twitch/login" class="btn purple small">Twitch</a>
+  </div>
+  <div class="list" id="list" style="margin-top:10px"></div>
+</div>
+
+<footer>
+  <div id="lanhint"></div>
+  <div>
+    Видео идёт через canvas (без &lt;video&gt;), поэтому работает и в Drive.<br>
+    Только на стоянке / в ожидании. <a href="/probe/">Диагностика браузера</a> · <a href="/twitch-client/">Старый клиент</a>
+  </div>
+</footer>
+
+<script src="/twitch-client/jsmpeg.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var $ = function (id) { return document.getElementById(id); };
+  var av = $('av'), cv = $('cv'), pb = $('playerBox');
+
+  var player = null, wsSrc = null;
+  var token = null, meta = null, ss = 0, pipeStart = 0, firstFrame = 0;
+  var isLive = false;
+  var delay = 4500, firstDelay = 4500, autoSync = true, syncOff = 0, lastSent = -1;
+  var fps = 0, fpsT = 0, playTimer = null, tickTimer = null, posTimer = null, audioHint = 0;
+  var fpsTimer = 0, fpsNow = 0, encFps = 0, fpsHist = [], autoQuality = true, lastDrop = 0;
+  // transport: 'ws' (primary) / 'http' (fallback if the browser blocks WebSockets)
+  var transport = 'ws';
+  if (/[?&]transport=http/.test(location.search)) transport = 'http';
+  var wsWatchdog = 0, wsGotMsg = false, httpPoll = 0;
+  var items = load('tv_items', []);
+  var lastQuery = '';
+
+  function load(k, d) { try { var v = JSON.parse(localStorage.getItem(k)); return v === null ? d : v; } catch (e) { return d; } }
+  function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+  function proto() { return location.protocol === 'https:' ? 'wss://' : 'ws://'; }
+
+  // backend address: same origin by default;
+  // override with ?api=https://host (saved to localStorage) or localStorage.tv_api
+  var API = (function () {
+    var m = /[?&]api=([^&]*)/.exec(location.search);
+    if (m) {
+      var v = decodeURIComponent(m[1]).replace(/\/+$/, '');
+      try { localStorage.setItem('tv_api', v); } catch (e) {}
+      return v;
+    }
+    try {
+      var s = localStorage.getItem('tv_api');
+      if (s) return String(s).replace(/\/+$/, '');
+    } catch (e) {}
+    return '';
+  })();
+  function rest(p) { return API + p; }
+  function apiProto() {
+    if (API) return /^https:/i.test(API) ? 'wss://' : 'ws://';
+    return proto();
+  }
+  function apiHost() { return API ? API.replace(/^[a-z]+:\/\//i, '') : location.host; }
+
+  function setStatus(msg, cls) {
+    var el = $('st');
+    el.className = cls || '';
+    el.textContent = msg;
+  }
+
+  function fmtTime(s) {
+    if (!isFinite(s) || s < 0) s = 0;
+    var m = Math.floor(s / 60), r = Math.floor(s % 60);
+    return (m < 10 ? '0' : '') + m + ':' + (r < 10 ? '0' : '') + r;
+  }
+
+  // ---------- Tesla ----------
+  var isTesla = /QtCarBrowser|Tesla/i.test(navigator.userAgent);
+
+  // ---------- health ----------
+  function warnMsg(msg) {
+    var w = $('warn');
+    w.style.display = 'block';
+    w.textContent = msg;
+  }
+
+  function isLocalHost(h) {
+    h = String(h || '').replace(/:\d+$/, '');
+    if (!h || h === 'localhost' || h === '127.0.0.1') return true;
+    if (/^192\.168\./.test(h)) return true;
+    if (/^10\./.test(h)) return true;
+    if (/^172\.(1[6-9]|2\d|3[01])\./.test(h)) return true;
+    return false;
+  }
+
+  function copyText(t) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(t);
+        return true;
+      }
+    } catch (e) {}
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = t;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    } catch (e) { return false; }
+  }
+
+  (function () {
+    // an https page cannot talk to an http backend (mixed content) - say it up front
+    if (API && location.protocol === 'https:' && API.indexOf('http://') === 0) {
+      warnMsg('Страница открыта по HTTPS, а сервер по HTTP — браузер заблокирует соединение. Нужен HTTPS-адрес сервера (туннель или TLS).');
+    }
+    var x = new XMLHttpRequest();
+    x.open('GET', rest('/api/health'), true);
+    x.timeout = 8000;
+    x.onload = function () {
+      var d = {};
+      try { d = JSON.parse(x.responseText); } catch (e) {}
+      if (!d.ok) return;
+      var miss = [];
+      if (!d.ffmpeg) miss.push('ffmpeg');
+      if (!d.ytDlp) miss.push('yt-dlp');
+      if (miss.length) warnMsg('На сервере нет: ' + miss.join(', ') + '. Строки не запустятся.');
+
+      var hint = $('lanhint');
+      var url = '';
+      var openedLocally = isLocalHost(location.hostname);
+      if (openedLocally && /^(localhost|127\.)/i.test(location.hostname) && d.lan && d.lan.length) {
+        url = 'http://' + d.lan[0] + (parseInt(d.port, 10) === 80 ? '' : ':' + d.port) + '/';
+        hint.textContent = 'Для Теслы: ' + url;
+      } else {
+        url = (d.origin || location.origin) + '/';
+        hint.textContent = (openedLocally ? 'Адрес для Теслы: ' : 'Доступен из любой сети: ') + url;
+      }
+      hint.setAttribute('data-url', url);
+      hint.title = 'Нажми, чтобы скопировать адрес';
+    };
+    x.onerror = function () {
+      warnMsg('Сервер недоступен. Проверь, запущен ли он (' + rest('/api/health') + ').');
+    };
+    x.send();
+  })();
+
+  $('lanhint').onclick = function () {
+    var u = this.getAttribute('data-url');
+    if (!u) return;
+    if (copyText(u)) setStatus('Адрес скопирован: ' + u, 'ok');
+  };
+
+  // ---------- source detection ----------
+  function detect(v) {
+    v = (v || '').trim();
+    if (!v) return null;
+    if (/^(https?:\/\/)/i.test(v)) return v;
+    if (/^(www\.)?(youtube\.com|youtu\.be|m\.youtube\.com)\//i.test(v)) return 'https://' + v;
+    if (/^(www\.)?twitch\.tv\//i.test(v)) return 'https://' + v;
+    if (/^[\w-]{1,25}$/.test(v)) return 'https://www.twitch.tv/' + v;
+    return 'ytsearch1:' + v;
+  }
+
+  function kindOf(src) {
+    if (/twitch\.tv/i.test(src)) return 'twitch';
+    if (/youtube|youtu\.be|ytsearch/i.test(src)) return 'yt';
+    return 'url';
+  }
+
+  // ---------- JSMpeg source wrapper: filters our JSON control frames ----------
+  function FilteredWS(url, options) {
+    var s = new JSMpeg.Source.WebSocket(url, options);
+    wsSrc = s;
+    var orig = s.onMessage.bind(s);
+    s.onMessage = function (ev) {
+      if (typeof ev.data === 'string') { onControl(ev.data); return; }
+      orig(ev);
+    };
+    return s;
+  }
+
+  // HTTP fallback: no control channel here, status is polled separately
+  function FilteredFetch(url, options) {
+    options.onSourceCompleted = function () { onHttpCompleted(); };
+    var s = new JSMpeg.Source.Fetch(url, options);
+    wsSrc = null;
+    return s;
+  }
+
+  function onControl(raw) {
+    wsGotMsg = true;
+    var m;
+    try { m = JSON.parse(raw); } catch (e) { return; }
+    if (m.type === 'status') {
+      if (m.message) setStatus(m.message);
+      if (m.stderr) setStatus('ffmpeg: ' + m.stderr, 'err');
+      // a new pipe was spawned while we were already playing (reconnect):
+      // pull the audio back to the same live edge
+      if (m.message === 'Starting video...' && firstFrame) resyncAudio();
+      if (m.message && m.message.indexOf('Stream ended') === 0) onStreamEnded(m.message);
+    } else if (m.type === 'error') {
+      setStatus('Ошибка: ' + m.message, 'err');
+    } else if (m.type === 'delay') {
+      delay = m.value;
+      lastSent = m.value;
+      $('syncVal').textContent = 'AV ' + (delay / 1000).toFixed(1) + 'с';
+    } else if (m.type === 'enc') {
+      encFps = m.fps || 0;
+      updateFpsLabel();
+    }
+  }
+
+  function resyncAudio() {
+    firstFrame = 0;
+    pipeStart = Date.now();
+    try {
+      av.src = rest('/api/live-audio?token=' + token + '&ss=' + ss + '&_=' + Date.now());
+      av.load();
+      tryPlay();
+    } catch (e) {}
+  }
+
+  var lastRepair = 0;
+  function onStreamEnded(msg) {
+    var clean = (msg === 'Stream ended');
+    if (isLive) return;              // jsmpeg reconnects, resyncAudio() follows
+    if (clean) { stopAll(); return; }// reached the end of the video
+    if (Date.now() - lastRepair < 6000) return;
+    lastRepair = Date.now();
+    var p = currentPos();
+    if (p > 2) setTimeout(function () { restart(p); }, 500);
+    else stopAll();
+  }
+
+  function sendCtrl(obj) {
+    if (transport === 'http') {
+      if (obj && obj.type === 'delay') {
+        var x = new XMLHttpRequest();
+        x.open('GET', rest('/api/stream-delay?token=' + encodeURIComponent(token || '')
+          + '&value=' + encodeURIComponent(obj.value)), true);
+        x.timeout = 3000;
+        try { x.send(); } catch (e) {}
+      }
+      return;
+    }
+    if (wsSrc && wsSrc.socket && wsSrc.socket.readyState === 1) {
+      try { wsSrc.socket.send(JSON.stringify(obj)); } catch (e) {}
+    }
+  }
+
+  // WebSocket never answered -> switch the video pipe to plain HTTP streaming
+  function startWsWatchdog() {
+    clearTimeout(wsWatchdog);
+    wsWatchdog = setTimeout(function () {
+      if (!token || firstFrame || wsGotMsg) return;
+      transport = 'http';
+      setStatus('WebSocket недоступен — переключаемся на HTTP-поток...', 'err');
+      resyncAudio();
+      openVideoPipe();
+    }, 9000);
+  }
+
+  function startHttpPoll() {
+    clearInterval(httpPoll);
+    httpPoll = setInterval(function () {
+      if (!token) { clearInterval(httpPoll); return; }
+      var x = new XMLHttpRequest();
+      x.open('GET', rest('/api/stream-status?token=' + encodeURIComponent(token)), true);
+      x.timeout = 4000;
+      x.onload = function () {
+        var d = null;
+        try { d = JSON.parse(x.responseText); } catch (e) {}
+        if (!d) return;
+        if (d.encodeFps) { encFps = d.encodeFps; updateFpsLabel(); }
+        if (d.error) {
+          setStatus('Ошибка: ' + d.error, 'err');
+          clearInterval(httpPoll);
+        }
+      };
+      try { x.send(); } catch (e) {}
+    }, 2500);
+  }
+
+  function onHttpCompleted() {
+    var t = token;
+    clearInterval(httpPoll);
+    if (!t) return;
+    var x = new XMLHttpRequest();
+    x.open('GET', rest('/api/stream-status?token=' + encodeURIComponent(t)), true);
+    x.timeout = 5000;
+    x.onload = function () {
+      var d = null;
+      try { d = JSON.parse(x.responseText); } catch (e) {}
+      if (d && d.error) { setStatus('Ошибка: ' + d.error, 'err'); return; }
+      if (isLive) { setTimeout(function () { restart(0); }, 500); return; }
+      onStreamEnded('Stream ended');
+    };
+    x.onerror = function () { onStreamEnded('Stream ended'); };
+    try { x.send(); } catch (e) {}
+  }
+
+  // ---------- playback ----------
+  function resolveAndPlay(src, useSs) {
+    var q = $('quality').value;
+    setStatus('Резолвим источник...');
+    $('bPlay').disabled = true;
+    var x = new XMLHttpRequest();
+    x.open('GET', rest('/api/resolve?src=' + encodeURIComponent(src) + '&quality=' + q), true);
+    x.timeout = 65000;
+    x.onload = function () {
+      $('bPlay').disabled = false;
+      var d = null;
+      try { d = JSON.parse(x.responseText); } catch (e) {}
+      if (!d || !d.ok) {
+        setStatus('Не удалось: ' + ((d && d.error) || ('HTTP ' + x.status)), 'err');
+        return;
+      }
+      token = d.token;
+      meta = d;
+      isLive = !!d.isLive;
+      ss = Math.max(0, useSs || 0);
+      remember(src, d.title);
+      startPipes();
+    };
+    x.onerror = function () { $('bPlay').disabled = false; setStatus('Сервер недоступен', 'err'); };
+    x.ontimeout = function () { $('bPlay').disabled = false; setStatus('Таймаут резолва (yt-dlp)', 'err'); };
+    x.send();
+  }
+
+  function startPipes() {
+    stopPipes(true);
+    $('pbCh').textContent = meta.uploader || meta.title || '--';
+    $('pbTtl').textContent = meta.title || '';
+    $('pbLive').className = isLive ? 'live' : 'live hidden';
+    $('bBack').className = isLive ? 'small hidden' : 'small';
+    $('bFwd').className = isLive ? 'small hidden' : 'small';
+    $('qual').textContent = $('quality').value + 'p';
+    pb.style.display = 'block';
+
+    var w = { 360: 640, 480: 854, 720: 1280, 1080: 1920 }[$('quality').value] || 1280;
+    var h = { 360: 360, 480: 480, 720: 720, 1080: 1080 }[$('quality').value] || 720;
+    cv.width = w; cv.height = h;
+
+    // audio pipe
+    pipeStart = Date.now();
+    av.src = rest('/api/live-audio?token=' + token + '&ss=' + ss + '&_=' + Date.now());
+    try { av.load(); } catch (e) {}
+    tryPlay();
+
+    // video pipe (same tick, delay buffer lives on the server)
+    openVideoPipe();
+
+    clearInterval(tickTimer);
+    tickTimer = setInterval(autoTick, 1000);
+    clearInterval(posTimer);
+    posTimer = setInterval(updatePos, 1000);
+    clearInterval(fpsTimer);
+    fpsTimer = setInterval(function () {
+      fpsNow = fps;
+      fps = 0;
+      updateFpsLabel();
+      watchFps();
+    }, 1000);
+    setStatus('Буферизация...');
+
+    armAudioUnlock();
+    clearTimeout(audioHint);
+    audioHint = setTimeout(function () {
+      if (token && av.paused && !av.ended) setStatus('Звук заблокирован браузером — коснись экрана', 'err');
+    }, 4000);
+  }
+
+  function openVideoPipe() {
+    if (player) { try { player.destroy(); } catch (e) {} player = null; }
+    wsSrc = null;
+    clearTimeout(wsWatchdog);
+    clearInterval(httpPoll);
+    wsGotMsg = false;
+
+    firstDelay = delay;
+    lastSent = -1;
+    fps = 0; fpsT = 0; firstFrame = 0;
+    fpsNow = 0; fpsHist.length = 0;
+    $('pbFps').textContent = '';
+
+    var opts = {
+      canvas: cv,
+      audio: false,
+      streaming: true,
+      videoBufferSize: 1048576,
+      preserveDrawingBuffer: true,
+      pauseWhenHidden: false,
+      onVideoDecode: function () {
+        if (!firstFrame) {
+          firstFrame = Date.now();
+          clearTimeout(wsWatchdog);
+          setStatus('Идёт воспроизведение', 'ok');
+        }
+        fps++;
+      }
+    };
+
+    try {
+      if (transport === 'http') {
+        var httpUrl = rest('/stream/mpeg1?token=' + token
+          + '&ss=' + ss + '&delay=' + delay + '&_=' + Date.now());
+        opts.source = FilteredFetch;
+        player = new JSMpeg.Player(httpUrl, opts);
+        startHttpPoll();
+      } else {
+        var wsUrl = apiProto() + apiHost() + '/ws/mpeg1?token=' + token + '&ss=' + ss + '&delay=' + delay;
+        opts.source = FilteredWS;
+        player = new JSMpeg.Player(wsUrl, opts);
+        startWsWatchdog();
+      }
+    } catch (e) {
+      setStatus('JSMpeg: ' + e.message, 'err');
+    }
+  }
+
+  function updateFpsLabel() {
+    $('pbFps').textContent = fpsNow + ' fps' + (encFps ? ' · enc ' + Math.round(encFps) : '');
+  }
+
+  // drop quality automatically when the client cannot keep up
+  var LOW_FPS = 18;
+  function watchFps() {
+    if (!autoQuality || !token || !firstFrame) { fpsHist.length = 0; return; }
+    fpsHist.push(fpsNow);
+    if (fpsHist.length > 8) fpsHist.shift();
+    if (fpsHist.length < 8) return;
+    if (!pipeStart || Date.now() - pipeStart < 9000) return;
+    if (Date.now() - lastDrop < 15000) return;
+    var sum = 0;
+    for (var i = 0; i < fpsHist.length; i++) sum += fpsHist[i];
+    if (sum / fpsHist.length >= LOW_FPS) return;
+    var order = ['360', '480', '720', '1080'];
+    var idx = order.indexOf($('quality').value);
+    if (idx <= 0) return;
+    lastDrop = Date.now();
+    changeQuality(order[idx - 1], false);
+  }
+
+  function changeQuality(q, manual) {
+    if (manual) autoQuality = false;
+    $('quality').value = q;
+    if (!meta || !token) return;
+    setStatus((manual ? 'Качество: ' : 'Низкий FPS → снижаю до ') + q + 'p...');
+    var src = meta.webpageUrl;
+    var at = isLive ? 0 : currentPos();
+    token = null;
+    stopPipes(true);
+    resolveAndPlay(src, at);
+  }
+
+  function tryPlay() {
+    clearInterval(playTimer);
+    playTimer = setInterval(function () {
+      if (!token) { clearInterval(playTimer); return; }
+      var p = av.play();
+      if (p && p.catch) p['catch'](function () {});
+    }, 200);
+  }
+
+  // some browsers only allow audio after a real user gesture (autostart via ?src=)
+  var audioArmed = false;
+  function armAudioUnlock() {
+    if (audioArmed) return;
+    audioArmed = true;
+    var h = function () { tryPlay(); };
+    document.addEventListener('touchstart', h, { passive: true });
+    document.addEventListener('mousedown', h);
+    document.addEventListener('keydown', h);
+  }
+
+  function stopPipes(keepBox) {
+    if (player) { try { player.destroy(); } catch (e) {} player = null; }
+    wsSrc = null;
+    clearTimeout(wsWatchdog);
+    clearTimeout(audioHint);
+    clearInterval(httpPoll);
+    clearInterval(playTimer);
+    clearInterval(tickTimer);
+    clearInterval(posTimer);
+    clearInterval(fpsTimer);
+    fpsNow = 0; encFps = 0; fpsHist.length = 0;
+    try { av.pause(); av.removeAttribute('src'); av.load(); } catch (e) {}
+    if (!keepBox) {
+      pb.style.display = 'none';
+      token = null; meta = null; firstFrame = 0; pipeStart = 0;
+      $('pbFps').textContent = '';
+      $('pos').textContent = '--:--';
+      render();
+    }
+  }
+
+  function stopAll() {
+    stopPipes(false);
+    setStatus('Остановлено');
+  }
+
+  function currentPos() {
+    if (!pipeStart) return 0;
+    return ss + (Date.now() - pipeStart) / 1000;
+  }
+
+  function updatePos() {
+    if (!meta) return;
+    var txt = fmtTime(currentPos());
+    if (meta.duration) txt += ' / ' + fmtTime(meta.duration);
+    $('pos').textContent = txt;
+  }
+
+  function seekBy(delta) {
+    if (isLive || !token) return;
+    var target = Math.max(0, currentPos() + delta);
+    restart(target);
+  }
+
+  function restart(newSs) {
+    ss = Math.max(0, newSs);
+    setStatus('Перемотка на ' + fmtTime(ss) + '...');
+    stopPipes(true);
+    startPipes();
+  }
+
+  // ---------- A/V sync ----------
+  // measured R = (now - firstFrame)/1000 - audio.currentTime
+  // real A/V error is E = R - (delay - firstDelay)/1000, so E = 0 exactly when
+  //   delay = firstDelay + R*1000
+  // firstDelay stays pinned to whatever the pipe was opened with, which makes
+  // the correction absolute instead of drifting tick after tick.
+  function autoTick(force) {
+    if (!meta || !autoSync || !firstFrame) return;
+    if (av.paused || av.readyState < 2 || isNaN(av.currentTime) || av.currentTime < 0.1) return;
+    var r = (Date.now() - firstFrame) / 1000 - av.currentTime;
+    if (r < -12 || r > 12) return;
+    if (!force && Math.abs(r) < 0.3) return;
+    var target = Math.round(clamp(firstDelay + r * 1000 + syncOff, 0, 30000));
+    if (Math.abs(target - lastSent) < 200) return;
+    delay = target;
+    lastSent = target;
+    sendCtrl({ type: 'delay', value: delay });
+    $('syncVal').textContent = 'AV ' + (delay / 1000).toFixed(1) + 'с';
+  }
+
+  function manualSync(deltaMs) {
+    delay = Math.round(clamp(delay + deltaMs, 0, 30000));
+    lastSent = delay;
+    sendCtrl({ type: 'delay', value: delay });
+    $('syncVal').textContent = 'AV ' + (delay / 1000).toFixed(1) + 'с';
+  }
+
+  // ---------- controls ----------
+  $('bPlay').onclick = function () {
+    var src = detect($('q').value);
+    if (!src) { setStatus('Введи ссылку или ник канала', 'err'); return; }
+    resolveAndPlay(src, 0);
+  };
+
+  $('q').onkeydown = function (e) { if (e.key === 'Enter') $('bPlay').onclick(); };
+
+  $('bSearch').onclick = function () {
+    var q = $('q').value.trim();
+    if (!q) { setStatus('Введи запрос', 'err'); return; }
+    setStatus('Ищем на YouTube...');
+    lastQuery = q;
+    var x = new XMLHttpRequest();
+    x.open('GET', rest('/api/search?q=' + encodeURIComponent(q)), true);
+    x.timeout = 45000;
+    x.onload = function () {
+      var d = null;
+      try { d = JSON.parse(x.responseText); } catch (e) {}
+      if (!d || !d.ok) { setStatus('Поиск: ' + ((d && d.error) || 'ошибка'), 'err'); return; }
+      renderResults(d.results || []);
+      setStatus('Найдено: ' + (d.results || []).length);
+    };
+    x.onerror = function () { setStatus('Поиск недоступен', 'err'); };
+    x.send();
+  };
+
+  function renderResults(list) {
+    var box = $('results'), h = '';
+    for (var i = 0; i < list.length; i++) {
+      h += '<button type="button" class="r" data-u="' + esc(list[i].url) + '">'
+        + '<span class="t">' + esc(list[i].title) + '</span>'
+        + '<span class="d">' + (list[i].duration ? fmtTime(list[i].duration) : 'live') + '</span></button>';
+    }
+    box.innerHTML = h || '<div class="empty">Ничего не найдено</div>';
+    $('resBox').className = 'panel';
+    var rows = box.querySelectorAll('.r');
+    for (var j = 0; j < rows.length; j++) {
+      rows[j].onclick = function () {
+        $('q').value = this.getAttribute('data-u');
+        resolveAndPlay(this.getAttribute('data-u'), 0);
+      };
+    }
+  }
+
+  function esc(s) {
+    return String(s || '').replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  $('bStop').onclick = stopAll;
+  $('bBack').onclick = function () { seekBy(-10); };
+  $('bFwd').onclick = function () { seekBy(10); };
+  $('syncUp').onclick = function () { if (autoSync) { syncOff += 250; autoTick(true); } else manualSync(500); };
+  $('syncDown').onclick = function () { if (autoSync) { syncOff -= 250; autoTick(true); } else manualSync(-500); };
+  $('syncAuto').onclick = function () {
+    autoSync = !autoSync;
+    this.className = autoSync ? 'small on' : 'small';
+    setStatus(autoSync ? 'A/V синхро: авто' : 'A/V синхро: вручную');
+    if (autoSync) autoTick(true);
+  };
+  $('vol').oninput = function () { av.volume = this.value / 100; };
+  av.volume = 0.8;
+  $('bFs').onclick = function () {
+    var el = pb;
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+      var ex = document.exitFullscreen || document.webkitExitFullscreen;
+      if (ex) { try { ex.call(document); } catch (e) {} }
+      document.body.classList.remove('cinema');
+      return;
+    }
+    var req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (req) {
+      try {
+        var p = req.call(el);
+        if (p && p.catch) p['catch'](function () { document.body.classList.add('cinema'); });
+        return;
+      } catch (e) {
+        document.body.classList.add('cinema');
+        return;
+      }
+    }
+    document.body.classList.add('cinema');
+  };
+  $('bExitFs').onclick = function () { document.body.classList.remove('cinema'); };
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') document.body.classList.remove('cinema');
+  });
+  $('quality').onchange = function () {
+    changeQuality(this.value, true);
+  };
+
+  av.addEventListener('playing', function () {
+    if (token && !firstFrame) setStatus('Звук играет, ждём видео...', 'ok');
+  });
+  av.addEventListener('error', function () {
+    if (token && av.getAttribute('src')) setStatus('Аудио-поток: ошибка (см. лог сервера)', 'err');
+  });
+
+  // ---------- saved list ----------
+  function remember(src, title) {
+    var k = src.toLowerCase();
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].src.toLowerCase() === k) {
+        items[i].title = title || items[i].title;
+        items[i].t = Date.now();
+        save('tv_items', items);
+        render();
+        return;
+      }
+    }
+    items.push({ src: src, title: title || src, kind: kindOf(src), t: Date.now() });
+    if (items.length > 60) items.shift();
+    save('tv_items', items);
+    render();
+  }
+
+  function findAttr(el, name) {
+    while (el && el.getAttribute) {
+      if (el.getAttribute(name) !== null) return el;
+      el = el.parentNode;
+    }
+    return null;
+  }
+
+  function bindKey(el, fn) {
+    el.onkeydown = function (e) {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault();
+        fn.call(this, e);
+      }
+    };
+  }
+
+  function render() {
+    var box = $('list');
+    if (!items.length) {
+      box.innerHTML = '<div class="empty">Пока пусто — добавь канал или ссылку</div>';
+      return;
+    }
+    var h = '';
+    for (var i = items.length - 1; i >= 0; i--) {
+      var it = items[i];
+      var act = (meta && meta.webpageUrl && meta.webpageUrl.toLowerCase() === it.src.toLowerCase()) ? ' act' : '';
+      h += '<div class="it' + act + '" data-i="' + i + '" role="button" tabindex="0">'
+        + '<span class="dot" id="d' + i + '"></span>'
+        + '<span class="nm">' + esc(it.kind === 'twitch' ? shortName(it.src) : '▶') + '</span>'
+        + '<span class="sub">' + esc(it.title) + '</span>'
+        + '<span class="del" data-x="' + i + '" role="button" tabindex="0" aria-label="Удалить">'
+        + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'
+        + '</span></div>';
+    }
+    box.innerHTML = h;
+    var rows = box.querySelectorAll('.it');
+    for (var j = 0; j < rows.length; j++) {
+      rows[j].onclick = function (e) {
+        if (findAttr(e.target, 'data-x')) return;
+        var it = items[parseInt(this.getAttribute('data-i'), 10)];
+        if (!it) return;
+        $('q').value = it.src;
+        resolveAndPlay(it.src, 0);
+      };
+      bindKey(rows[j], rows[j].onclick);
+    }
+    var dels = box.querySelectorAll('.del');
+    for (var k = 0; k < dels.length; k++) {
+      dels[k].onclick = function (e) {
+        e.stopPropagation();
+        items.splice(parseInt(this.getAttribute('data-x'), 10), 1);
+        save('tv_items', items);
+        render();
+      };
+      bindKey(dels[k], dels[k].onclick);
+    }
+    checkLive();
+  }
+
+  function shortName(src) {
+    var m = src.match(/twitch\.tv\/([\w-]+)/i);
+    return m ? m[1] : src;
+  }
+
+  function checkLive() {
+    for (var i = items.length - 1; i >= 0; i--) {
+      (function (idx) {
+        var it = items[idx];
+        if (it.kind !== 'twitch') return;
+        var ch = shortName(it.src);
+        var x = new XMLHttpRequest();
+        x.open('GET', rest('/api/twitch/status?channel=' + encodeURIComponent(ch)), true);
+        x.timeout = 30000;
+        x.onload = function () {
+          var d = null;
+          try { d = JSON.parse(x.responseText); } catch (e) {}
+          var el = $('d' + idx);
+          if (!el) return;
+          if (d && d.live) {
+            el.className = 'dot on';
+            el.title = d.title || 'Live';
+            if (it.title && it.title.indexOf('offline') === 0) it.title = d.title;
+          } else {
+            el.className = 'dot';
+          }
+        };
+        x.send();
+      })(i);
+    }
+  }
+
+  $('bAdd').onclick = function () {
+    var src = detect($('addInp').value);
+    if (!src) return;
+    remember(src, $('addInp').value.trim());
+    $('addInp').value = '';
+  };
+  $('addInp').onkeydown = function (e) { if (e.key === 'Enter') $('bAdd').onclick(); };
+  $('bRefresh').onclick = function () { render(); setStatus('Обновлено'); };
+
+  // ---------- twitch oauth import ----------
+  (function () {
+    var p = location.search.substring(1).split('&');
+    for (var i = 0; i < p.length; i++) {
+      var kv = p[i].split('=');
+      if (kv[0] === 'token' && kv[1]) {
+        var t = decodeURIComponent(kv[1]);
+        save('twitch_token', t);
+        setStatus('Вход выполнен, импортируем подписки...');
+        var x = new XMLHttpRequest();
+        x.open('GET', rest('/api/twitch/follows?token=' + encodeURIComponent(t)), true);
+        x.onload = function () {
+          var d = null;
+          try { d = JSON.parse(x.responseText); } catch (e) {}
+          if (d && d.ok && d.channels) {
+            var n = 0;
+            for (var j = 0; j < d.channels.length; j++) {
+              var src = 'https://www.twitch.tv/' + d.channels[j];
+              var found = false;
+              for (var k = 0; k < items.length; k++) if (items[k].src.toLowerCase() === src.toLowerCase()) found = true;
+              if (!found) { items.push({ src: src, title: d.channels[j], kind: 'twitch', t: Date.now() }); n++; }
+            }
+            save('tv_items', items);
+            render();
+            setStatus('Добавлено каналов: ' + n, 'ok');
+          } else {
+            setStatus('Импорт: ' + ((d && d.error) || 'ошибка'), 'err');
+          }
+          history.replaceState({}, '', location.pathname);
+        };
+        x.send();
+      }
+    }
+  })();
+
+  render();
+  $('syncVal').textContent = 'AV ' + (delay / 1000).toFixed(1) + 'с';
+
+  if (isTesla) {
+    $('tag').textContent = 'tesla';
+    $('quality').value = '480';
+    setStatus('Tesla обнаружен');
+  }
+
+  // ---------- auto start: /?src=<url> | /?q=<поиск> | /?src=twitch_channel ----------
+  (function () {
+    var m = /[?&]src=([^&]*)/.exec(location.search);
+    var s = /[?&]q=([^&]*)/.exec(location.search);
+    var src = null;
+    if (m && m[1]) src = decodeURIComponent(m[1].replace(/\+/g, ' '));
+    else if (s && s[1]) src = 'ytsearch1:' + decodeURIComponent(s[1].replace(/\+/g, ' '));
+    if (!src) return;
+    $('q').value = src;
+    setStatus('Автозапуск...');
+    setTimeout(function () { resolveAndPlay(src, 0); }, 250);
+  })();
+
+  // debug hook for automated tests / tuning
+  window.__tv = {
+    s: function () {
+      return {
+        fps: fpsNow,
+        fpsRaw: fps,
+        enc: encFps,
+        delay: delay,
+        firstFrame: firstFrame,
+        transport: transport,
+        quality: $('quality').value,
+        r: firstFrame ? (Date.now() - firstFrame) / 1000 - av.currentTime : 0,
+        av: av.currentTime,
+        pos: currentPos(),
+        playing: !!meta && !!token,
+        auto: autoSync,
+        autoQ: autoQuality,
+        status: $('st').textContent,
+        lastSent: lastSent,
+      };
+    },
+    // test hook: emulate a sustained low-fps window
+    drop: function () {
+      fpsHist.length = 0;
+      for (var i = 0; i < 8; i++) fpsHist.push(0);
+      pipeStart = Date.now() - 20000;
+      lastDrop = 0;
+      watchFps();
+      return $('quality').value;
+    }
+  };
+})();
+</script>
+</body>
+</html>
